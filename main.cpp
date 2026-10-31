@@ -1,5 +1,7 @@
 #include <iostream>
 #include <string>
+#include <vector>
+#include <memory>
 
 // creating a parent class, sensor
 class Sensor {
@@ -84,13 +86,15 @@ void report (Sensor& S) {
 }
 
 int main() {
-    Thermometer t;
-    PressureSensor s;
-    IMUSensor i;
+    // creating a list of sensors
+    std::vector<std::unique_ptr<Sensor>> sensors;
+    sensors.push_back(std::make_unique<Thermometer>());
+    sensors.push_back(std::make_unique<PressureSensor>());
+    sensors.push_back(std::make_unique<IMUSensor>());
 
-    report(t);
-    report(s);
-    report(i);
+    for (const auto& s: sensors){
+        std::cout << s->name() << ": " << s->read() << std::endl;
+    }
 
     return 0;
 }
