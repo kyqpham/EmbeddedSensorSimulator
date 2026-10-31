@@ -6,6 +6,8 @@
 // creating a parent class, sensor
 class Sensor {
     public:
+        inline static int count = 0;
+
         std::string category() const {
             return "sensor";
         }
@@ -19,9 +21,15 @@ class Sensor {
         virtual double read() = 0;
         virtual std::string name() const = 0;
     
+        // adding the constructor
+        Sensor() {
+            count ++;
+        }
+
         // creating a destructor
         virtual ~Sensor() {
             std::cout << "Sensor destroyed" << std::endl;
+            count --;
         }
 };
 
@@ -86,15 +94,23 @@ void report (Sensor& S) {
 }
 
 int main() {
-    // creating a list of sensors
+    std::cout << "count: " << Sensor::count << std::endl;
+
+    // creating a list of sensors using unique pointers
+    // unique pointers delete the pointed object when its deleted
+    // unique = one object at a time, no copies
     std::vector<std::unique_ptr<Sensor>> sensors;
     sensors.push_back(std::make_unique<Thermometer>());
     sensors.push_back(std::make_unique<PressureSensor>());
     sensors.push_back(std::make_unique<IMUSensor>());
 
+    std::cout << "count: " << Sensor::count << std::endl;
+    
+    // because unique pointers only have one, & operator needed
+    // have to use -> instead of dot notation
+    // because of the pointers
     for (const auto& s: sensors){
         std::cout << s->name() << ": " << s->read() << std::endl;
     }
-
     return 0;
 }
