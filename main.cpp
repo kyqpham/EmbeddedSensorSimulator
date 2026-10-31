@@ -9,15 +9,24 @@ class Sensor {
         }
 
         // virtual method to allow override
-        virtual double read() {
-            return 0.0;
+        // with a body, the class isn't abstract
+        // this makes an abstract class
+
+        // subclasses must implement their
+        // own version.
+        virtual double read() = 0;
+        virtual std::string name() const = 0;
+    
+        // creating a destructor
+        virtual ~Sensor() {
+            std::cout << "Sensor destroyed" << std::endl;
         }
 };
 
 // creating subclass, thermometer
 class Thermometer : public Sensor {
     public:
-        std::string name() const {
+        std::string name() const override {
             return "thermometer";
         }
 
@@ -31,6 +40,11 @@ class Thermometer : public Sensor {
             std::cout << category() << std::endl; 
             std::cout << read() << std::endl;
         }
+    
+    // adding a destructor
+    ~Thermometer() {
+        std::cout << "Thermometer destroyed" << std::endl;
+    }
 };
 
 void report (Sensor& S) {
@@ -41,6 +55,9 @@ int main() {
     Thermometer t;
     t.describe();
     report(t);
+
+    Sensor* p = new Thermometer;
+    delete p;
 
     return 0;
 }
