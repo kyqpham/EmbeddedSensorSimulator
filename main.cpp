@@ -42,22 +42,55 @@ class Thermometer : public Sensor {
         }
     
     // adding a destructor
+    // note that activating a subclass destructors
+    // also activates the parent class destructor
     ~Thermometer() {
         std::cout << "Thermometer destroyed" << std::endl;
     }
 };
 
+class PressureSensor : public Sensor {
+    public:
+        std::string name() const override {
+            return "pressure";
+        }
+
+        double read() override {
+            return 101.3;
+        }
+    
+    ~PressureSensor() {
+        std::cout << "PressureSensor destroyed" << std::endl;
+    }
+};
+
+class IMUSensor : public Sensor {
+    public:
+        std::string name() const override {
+            return "imu";
+        }
+
+        double read() override {
+            return 9.8;
+        }
+    
+    ~IMUSensor() {
+        std::cout << "IMUSensor destroyed" << std::endl;
+    }
+};
+
 void report (Sensor& S) {
-    std::cout << S.read() << std::endl;
+    std::cout << S.name() << ": " << S.read() << std::endl;
 }
 
 int main() {
     Thermometer t;
-    t.describe();
-    report(t);
+    PressureSensor s;
+    IMUSensor i;
 
-    Sensor* p = new Thermometer;
-    delete p;
+    report(t);
+    report(s);
+    report(i);
 
     return 0;
 }
