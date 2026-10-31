@@ -6,6 +6,12 @@
 // creating a parent class, sensor
 class Sensor {
     public:
+        // declaring static function
+        // static functiion implemented later
+        // helps create a list of sensors
+        // with input text, not the class name itself
+        // ie: a factory
+        static std::unique_ptr<Sensor> create (const std:: string& type);
         inline static int count = 0;
 
         std::string category() const {
@@ -93,6 +99,23 @@ void report (Sensor& S) {
     std::cout << S.name() << ": " << S.read() << std::endl;
 }
 
+// implementing a static function declared in Sensor
+std::unique_ptr<Sensor> Sensor::create(const std:: string& type) {
+    // creating the mappings as arg types
+    if (type == "temp") {
+        return std::make_unique<Thermometer>();
+    }
+    else if (type == "pressure") {
+        return std::make_unique<PressureSensor>();
+    }
+    else if (type == "imu") {
+        return std::make_unique<IMUSensor>();
+    }
+    else {
+        return nullptr;
+    }
+}
+
 int main() {
     std::cout << "count: " << Sensor::count << std::endl;
 
@@ -100,12 +123,12 @@ int main() {
     // unique pointers delete the pointed object when its deleted
     // unique = one object at a time, no copies
     std::vector<std::unique_ptr<Sensor>> sensors;
-    sensors.push_back(std::make_unique<Thermometer>());
-    sensors.push_back(std::make_unique<PressureSensor>());
-    sensors.push_back(std::make_unique<IMUSensor>());
+    sensors.push_back(Sensor::create("temp"));
+    sensors.push_back(Sensor::create("pressure"));
+    sensors.push_back(Sensor::create("imu"));
 
     std::cout << "count: " << Sensor::count << std::endl;
-    
+
     // because unique pointers only have one, & operator needed
     // have to use -> instead of dot notation
     // because of the pointers
