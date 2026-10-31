@@ -1,5 +1,3 @@
-# EmbeddedSensorSimulator
-
 # Embedded Sensor Simulator
 
 A small C++17 program that simulates the sensor layer of an embedded system. Three fake sensors (temperature, pressure, IMU) share one abstract interface, are created through a factory, are stored and polled polymorphically, and each one logs its recent readings into a hand-written fixed-size **ring buffer**.
