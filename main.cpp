@@ -2,7 +2,58 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include <array>
 
+class RingBuffer {
+    public:
+        // how many readings are stored
+        int size() const {
+            return count;
+        }
+
+        // true if nothing is stored
+        bool empty() const {
+            return count == 0;
+        }
+
+        // true if every slot is used
+        bool full() const{
+            return count == capacity;
+        }
+
+        void push(double value) {
+            int slot;
+            if (!full()) {
+                slot = (head + count) % capacity;
+                data[slot] = value;
+                count++;
+            } 
+            else{
+                data[head] = value;
+                head = (head + 1) % capacity;
+            }
+        }
+
+        //prints each slow in array order
+        // plus head + count for debugging
+        void printRaw() const {
+            for (double x : data) {
+                std::cout << x << " ";
+            }
+            std::cout << "| head =" << head << " count=" << count << std::endl;
+        }
+
+    private:
+        // seting the number of slots
+        static constexpr int capacity = 4;
+        std::array<double, capacity> data {};
+
+        // slot holding the oldest reading
+        int head = 0;
+        
+        // counting how many slots are filled
+        int count = 0;
+};
 // creating a parent class, sensor
 class Sensor {
     public:
@@ -117,6 +168,7 @@ std::unique_ptr<Sensor> Sensor::create(const std:: string& type) {
 }
 
 int main() {
+    RingBuffer rb;
     std::cout << "count: " << Sensor::count << std::endl;
 
     // creating a list of sensors using unique pointers
@@ -135,5 +187,7 @@ int main() {
     for (const auto& s: sensors){
         std::cout << s->name() << ": " << s->read() << std::endl;
     }
+
+    std::cout << rb.size() << " " << rb.empty() << " " << rb.full() << std::endl;
     return 0;
 }
