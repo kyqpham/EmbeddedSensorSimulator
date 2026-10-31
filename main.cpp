@@ -43,6 +43,15 @@ class RingBuffer {
             std::cout << "| head =" << head << " count=" << count << std::endl;
         }
 
+        // prints readings from oldest to newest
+        void print() const {
+            for (int i = 0; i < count; i++) {
+                int slot = (head + i) % capacity;
+                std::cout << data[slot] << " ";
+            }
+            std::cout << std::endl;
+        }
+
     private:
         // seting the number of slots
         static constexpr int capacity = 4;
@@ -168,7 +177,6 @@ std::unique_ptr<Sensor> Sensor::create(const std:: string& type) {
 }
 
 int main() {
-    RingBuffer rb;
     std::cout << "count: " << Sensor::count << std::endl;
 
     // creating a list of sensors using unique pointers
@@ -188,6 +196,17 @@ int main() {
         std::cout << s->name() << ": " << s->read() << std::endl;
     }
 
-    std::cout << rb.size() << " " << rb.empty() << " " << rb.full() << std::endl;
+    RingBuffer rb1;
+    for (int v = 10; v <= 60; v += 10) rb1.push(v);
+    rb1.printRaw();     
+    rb1.print();        
+
+    RingBuffer rb2;
+    rb2.push(10); rb2.push(20);
+    rb2.print();        // 10 20
+
+    RingBuffer rb3;
+    rb3.print();        
+
     return 0;
 }
