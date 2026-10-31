@@ -97,6 +97,23 @@ class Sensor {
             std::cout << "Sensor destroyed" << std::endl;
             count --;
         }
+
+        // takes one reading + stores it into sensor's logs
+        void sample() {
+            log.push(read());
+        }
+
+        // print the sensor's name + logged readings
+        void printLog() const {
+            std::cout << name() << ": ";
+            log.print();
+        }
+        
+
+    private:
+        // each sensor gets their own log
+        // to distinguish readings from each sensor
+        RingBuffer log;
 };
 
 // creating subclass, thermometer
@@ -108,7 +125,7 @@ class Thermometer : public Sensor {
 
         // overriding the parent read() method
         double read() override {
-            return 21.5;
+            return temp += 0.5;
         }
 
         void describe() {
@@ -116,13 +133,16 @@ class Thermometer : public Sensor {
             std::cout << category() << std::endl; 
             std::cout << read() << std::endl;
         }
-    
-    // adding a destructor
-    // note that activating a subclass destructors
-    // also activates the parent class destructor
-    ~Thermometer() {
-        std::cout << "Thermometer destroyed" << std::endl;
-    }
+        // adding a destructor
+        // note that activating a subclass destructors
+        // also activates the parent class destructor
+        ~Thermometer() {
+            std::cout << "Thermometer destroyed" << std::endl;
+        }
+
+    private:
+        // current fake temperature
+        double temp = 20.0;
 };
 
 class PressureSensor : public Sensor {
@@ -187,26 +207,19 @@ int main() {
     sensors.push_back(Sensor::create("pressure"));
     sensors.push_back(Sensor::create("imu"));
 
-    std::cout << "count: " << Sensor::count << std::endl;
-
-    // because unique pointers only have one, & operator needed
-    // have to use -> instead of dot notation
-    // because of the pointers
-    for (const auto& s: sensors){
-        std::cout << s->name() << ": " << s->read() << std::endl;
+    // takes six rounds of readings
+    for (int round = 0; round < 6; round++) {
+        for (const auto& s : sensors) {
+            s->sample();
+        }
     }
 
-    RingBuffer rb1;
-    for (int v = 10; v <= 60; v += 10) rb1.push(v);
-    rb1.printRaw();     
-    rb1.print();        
-
-    RingBuffer rb2;
-    rb2.push(10); rb2.push(20);
-    rb2.print();        // 10 20
-
-    RingBuffer rb3;
-    rb3.print();        
+    // prints each sensor's log
+    for (const auto& s : sensors) {
+        s->printLog();
+    }
+    
+    std::cout << "count: " << Sensor::count << std::endl;   
 
     return 0;
 }
