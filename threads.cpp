@@ -8,6 +8,13 @@ void work(int id) {
     std::cout << "hello from thread " << id <<  std::endl;
 }
 
+int counter = 0;
+
+void increment() {
+    for (int i = 0; i < 100000; i++) {
+        counter++;
+    }
+}
 int main() {    
     // adding a lock guard mutex
     // starting a thread running work(1)
