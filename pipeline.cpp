@@ -5,6 +5,8 @@
 #include <string>
 #include <chrono>
 #include <condition_variable>
+#include "sensor.h"
+#include <vector>
 
 // one sensor reading: which sensor, and what value
 // recall that structs are similar to classes
@@ -47,13 +49,13 @@ std::queue<Reading> readings;
 std::mutex queueLock;
 
 // producers create data
-void producer(int id, double value) {
+void producer(Sensor* s, int id) {
     for (int i = 0; i < 5; i++) {
         // adding parentheses to release lock
         {
             // generating + reading in data
             std::lock_guard<std::mutex> guard(queueLock);
-            readings.push(Reading{id, value + i});
+            readings.push(Reading{id, s->read() + i});
         }
     
     // sleeps for 10 ms betewen readings
@@ -103,13 +105,18 @@ void consumer(int total) {
         }
     }
     std::cout << "consumer checked " << checks << " times" << std::endl;
-    std::cout << "outlieres flagged: " << outliers << std::endl;
+    std::cout << "outliers flagged: " << outliers << std::endl;
 }
 int main() {
     // producer threads, one per sensor
-    std::thread p1(producer, 1, 21.5);
-    std::thread p2(producer, 2, 101.3);
-    std::thread p3(producer, 3, 9.8);
+    std::vector<std::unique_ptr<Sensor>> sensors;
+    sensors.push_back(Sensor::create("temp"));
+    sensors.push_back(Sensor::create("pressure"));
+    sensors.push_back(Sensor::create("imu"));
+
+    std::thread p1(producer, sensors[0].get(), 1);
+    std::thread p2(producer, sensors[1].get(), 2);
+    std::thread p3(producer, sensors[2].get(), 3);
 
     // one consumer thread
     // three sensors, five readings = 15
