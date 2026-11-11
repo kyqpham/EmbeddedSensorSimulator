@@ -51,6 +51,7 @@ void producer(int id, double value) {
     for (int i = 0; i < 5; i++) {
         // adding parentheses to release lock
         {
+            // generating + reading in data
             std::lock_guard<std::mutex> guard(queueLock);
             readings.push(Reading{id, value + i});
         }
@@ -60,11 +61,27 @@ void producer(int id, double value) {
     }
 }
 
+// adding in to flag outliers
+bool isOutlier (const Reading& r) {
+    if (r.sensorId == 1) {
+        return r.value < 20.0 || r.value > 24.0;
+    }
+    if (r.sensorId == 2) {
+        return r.value < 100.0 || r.value > 104.0;
+    }
+    if (r.sensorId == 3) {
+        return r.value < 9.0 || r.value > 12.0;
+    }
+    else { 
+        return false;
+    }
+}
 // consumers use the data
 // busy-waits: keeps checking the queue even if empty
 void consumer(int total) {
     int consumed = 0;
     int checks = 0;
+    int outliers = 0;
 
     while (consumed < total) {
         // checks every pass, instantly
@@ -74,11 +91,19 @@ void consumer(int total) {
             Reading r = readings.front();
             readings.pop();
 
-            Logger::instance().log("sensor " + std::to_string(r.sensorId) + ": " + std::to_string(r.value));
+            if (isOutlier(r)) {
+                Logger::instance().log("WARNING: sensor " + std::to_string(r.sensorId) + " out of range: " 
+                + std::to_string(r.value));
+                outliers++;
+            }
+            else {
+                Logger::instance().log("sensor " + std::to_string(r.sensorId) + ": " + std::to_string(r.value));
+            }
             consumed++;
         }
     }
     std::cout << "consumer checked " << checks << " times" << std::endl;
+    std::cout << "outlieres flagged: " << outliers << std::endl;
 }
 int main() {
     // producer threads, one per sensor
