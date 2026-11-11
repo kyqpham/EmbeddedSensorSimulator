@@ -4,6 +4,7 @@
 #include <queue>
 #include <string>
 #include <chrono>
+#include <condition_variable>
 
 // one sensor reading: which sensor, and what value
 // recall that structs are similar to classes
@@ -17,6 +18,27 @@ struct Reading {
 
 // exactly one logger exists, shared by every thread
 // records what's happening while it runs
+class Logger{ 
+    public:
+    // returns the single logger
+    static Logger& instance() {
+        static Logger logger;
+        return logger;
+    }
+
+    // making it thread-safe
+    // prints one message at a time
+    void log(const std::string& msg) {
+        std::lock_guard<std::mutex> guard(lock);
+        std::cout << msg << std::endl;
+    }
+
+    // private constructor
+    // nothing else can make a logger
+    private:
+        Logger() {}
+        std::mutex lock;
+};
 
 // shared queue + corresponding mutex between threads
 // queues are the middle man between producers and consumers
@@ -27,11 +49,15 @@ std::mutex queueLock;
 // producers create data
 void producer(int id, double value) {
     for (int i = 0; i < 5; i++) {
-        std::lock_guard<std::mutex> guard(queueLock);
-        readings.push(Reading{id, value + i});
-    }
-    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        // adding parentheses to release lock
+        {
+            std::lock_guard<std::mutex> guard(queueLock);
+            readings.push(Reading{id, value + i});
+        }
     
+    // sleeps for 10 ms betewen readings
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
 }
 
 // consumers use the data
@@ -41,13 +67,14 @@ void consumer(int total) {
     int checks = 0;
 
     while (consumed < total) {
+        // checks every pass, instantly
         checks++;
         std::lock_guard<std::mutex> guard(queueLock);
         if (!readings.empty()) {
             Reading r = readings.front();
             readings.pop();
-            
-            std::cout << "sensor " << r.sensorId << ": " << r.value << std::endl;
+
+            Logger::instance().log("sensor " + std::to_string(r.sensorId) + ": " + std::to_string(r.value));
             consumed++;
         }
     }
