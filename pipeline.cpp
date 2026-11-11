@@ -2,6 +2,8 @@
 #include <thread>
 #include <mutex>
 #include <queue>
+#include <string>
+#include <chrono>
 
 // one sensor reading: which sensor, and what value
 // recall that structs are similar to classes
@@ -13,21 +15,33 @@ struct Reading {
     double value;
 };
 
+// exactly one logger exists, shared by every thread
+// records what's happening while it runs
+
 // shared queue + corresponding mutex between threads
+// queues are the middle man between producers and consumers
+// holds readings that haven't been processed
 std::queue<Reading> readings;
 std::mutex queueLock;
 
+// producers create data
 void producer(int id, double value) {
     for (int i = 0; i < 5; i++) {
         std::lock_guard<std::mutex> guard(queueLock);
         readings.push(Reading{id, value + i});
     }
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    
 }
 
+// consumers use the data
+// busy-waits: keeps checking the queue even if empty
 void consumer(int total) {
     int consumed = 0;
+    int checks = 0;
 
     while (consumed < total) {
+        checks++;
         std::lock_guard<std::mutex> guard(queueLock);
         if (!readings.empty()) {
             Reading r = readings.front();
@@ -37,6 +51,7 @@ void consumer(int total) {
             consumed++;
         }
     }
+    std::cout << "consumer checked " << checks << " times" << std::endl;
 }
 int main() {
     // producer threads, one per sensor
@@ -46,9 +61,10 @@ int main() {
 
     // one consumer thread
     // three sensors, five readings = 15
+    // if only read 10 times, 5 would be left in queue
     std::thread c(consumer, 15);
 
-    // contineu when all threads are finished
+    // continue when all threads are finished
     p1.join();
     p2.join();
     p3.join();
